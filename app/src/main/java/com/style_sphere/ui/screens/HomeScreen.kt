@@ -3,6 +3,8 @@ package com.style_sphere.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -56,42 +58,99 @@ fun HomeScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Card Add new clothing
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .background(cream, RoundedCornerShape(20.dp))
-                    .clickable { navController.navigate(Screen.Closet.route) }
-                    .padding(24.dp),
-                contentAlignment = Alignment.CenterStart
+            // Cards row: Add new clothing + Create a new Look, side by side
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    "Add new\nclothing",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(110.dp)
+                        .background(cream, RoundedCornerShape(20.dp))
+                        .clickable { navController.navigate(Screen.Closet.route) }
+                        .padding(16.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Text(
+                        "Add new\nclothing",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(110.dp)
+                        .background(pink, RoundedCornerShape(20.dp))
+                        .clickable { navController.navigate(Screen.Closet.route) }
+                        .padding(16.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Text(
+                        "Create a\nnew Look",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // Card Create a new Look
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .background(pink, RoundedCornerShape(20.dp))
-                    .clickable { navController.navigate(Screen.Closet.route) }
-                    .padding(24.dp),
-                contentAlignment = Alignment.CenterStart
+
+            Column(
+                modifier = Modifier.clickable {
+                    navController.navigate(Screen.Closet.route)
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("openTab", 1)
+                }
             ) {
                 Text(
-                    "Create a\nnew Look",
-                    fontSize = 22.sp,
+                    "My Looks",
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = yellow
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "By generator",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = purple
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(3) {
+                        Box(
+                            modifier = Modifier
+                                .size(100.dp)
+                                .background(Color(0xFFD0C4E8), RoundedCornerShape(12.dp))
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    "By me",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = yellow
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(3) {
+                        Box(
+                            modifier = Modifier
+                                .size(100.dp)
+                                .background(Color(0xFFFFF0B0), RoundedCornerShape(12.dp))
+                        )
+                    }
+                }
             }
         }
     }

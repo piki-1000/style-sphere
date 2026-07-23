@@ -10,10 +10,12 @@ import com.style_sphere.ui.screens.HomeScreen
 import com.style_sphere.ui.screens.ProfileScreen
 import com.style_sphere.ui.screens.ClosetScreen
 import com.style_sphere.ui.screens.ForumScreen
+import com.style_sphere.ui.screens.SignUpScreen
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
     object SignIn : Screen("signin")
+    object SignUp : Screen("signup")
     object Home : Screen("home")
     object Profile : Screen("profile")
     object Closet : Screen("closet")
@@ -31,6 +33,9 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Screen.SignIn.route) {
             SignInScreen(navController = navController)
+        }
+        composable(Screen.SignUp.route) {
+            SignUpScreen(navController = navController)
         }
         composable(Screen.Home.route) {
             HomeScreen(navController = navController)

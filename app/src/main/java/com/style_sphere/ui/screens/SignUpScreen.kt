@@ -19,9 +19,10 @@ import com.google.firebase.auth.FirebaseAuth
 import com.style_sphere.navigation.Screen
 
 @Composable
-fun SignInScreen(navController: NavController) {
+fun SignUpScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
@@ -41,7 +42,7 @@ fun SignInScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Sign in",
+            text = "Create account",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = purple
@@ -52,7 +53,7 @@ fun SignInScreen(navController: NavController) {
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Email or Username") },
+            label = { Text("Email") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(50),
@@ -84,6 +85,22 @@ fun SignInScreen(navController: NavController) {
             )
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            label = { Text("Confirm Password") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(50),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = purple,
+                focusedLabelColor = purple
+            )
+        )
+
         if (errorMessage != null) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
@@ -93,15 +110,7 @@ fun SignInScreen(navController: NavController) {
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-            TextButton(onClick = {}) {
-                Text("Forget Password ?", color = purple)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
@@ -111,9 +120,13 @@ fun SignInScreen(navController: NavController) {
                     errorMessage = "Please fill in all fields."
                     return@Button
                 }
+                if (password != confirmPassword) {
+                    errorMessage = "Passwords do not match."
+                    return@Button
+                }
 
                 isLoading = true
-                auth.signInWithEmailAndPassword(email, password)
+                auth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener { task ->
                         isLoading = false
                         if (task.isSuccessful) {
@@ -122,7 +135,7 @@ fun SignInScreen(navController: NavController) {
                             }
                         } else {
                             errorMessage = task.exception?.localizedMessage
-                                ?: "Sign in failed. Please try again."
+                                ?: "Sign up failed. Please try again."
                         }
                     }
             },
@@ -140,37 +153,16 @@ fun SignInScreen(navController: NavController) {
                     strokeWidth = 2.dp
                 )
             } else {
-                Text("Sign in", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Sign Up", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Or sign in With", color = Color.Gray, fontSize = 14.sp)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            listOf("G", "f", "X", "in").forEach { label ->
-                OutlinedButton(
-                    onClick = {},
-                    shape = RoundedCornerShape(50),
-                    modifier = Modifier.size(52.dp),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Text(label, fontWeight = FontWeight.Bold, color = purple)
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Don't have account ? ", color = Color.Gray, fontSize = 14.sp)
-            TextButton(onClick = { navController.navigate(Screen.SignUp.route) }) {
-                Text("Sign Up", color = purple, fontWeight = FontWeight.Bold)
+            Text("Already have an account? ", color = Color.Gray, fontSize = 14.sp)
+            TextButton(onClick = { navController.popBackStack() }) {
+                Text("Sign In", color = purple, fontWeight = FontWeight.Bold)
             }
         }
     }

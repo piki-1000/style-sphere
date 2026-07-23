@@ -21,7 +21,13 @@ import androidx.navigation.NavController
 @Composable
 fun ClosetScreen(navController: NavController) {
     val purple = Color(0xFF7B5EA7)
-    var selectedTab by remember { mutableStateOf(0) }
+
+    // Read the tab index passed from HomeScreen (defaults to 0 = "My Clothes" if not set)
+    val openTab = navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.get<Int>("openTab")
+
+    var selectedTab by remember { mutableStateOf(openTab ?: 0) }
     val tabs = listOf("My Clothes", "My Looks")
 
     val categories = listOf(
