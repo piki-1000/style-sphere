@@ -1,10 +1,12 @@
 package com.style_sphere.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -15,7 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,7 +28,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.style_sphere.data.ClothingItem
 import com.style_sphere.data.OutfitLook
+import com.style_sphere.data.UserProfile
 import com.style_sphere.navigation.Screen
+import com.style_sphere.util.base64ToBitmap
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -32,6 +38,8 @@ fun HomeScreen(navController: NavController) {
     val yellow = Color(0xFFFFD600)
     val cream = Color(0xFFFFF8E1)
     val pink = Color(0xFFFFE4E9)
+    val darkyellow = Color(0xFF7B3F00)
+    val darkpink = Color(0xFFE75480)
 
     val categories = listOf(
         "T-shirts" to Color(0xFFD0C4E8),
@@ -54,6 +62,10 @@ fun HomeScreen(navController: NavController) {
     // The user's saved outfit looks (for "My Looks")
     var looks by remember { mutableStateOf<List<OutfitLook>>(emptyList()) }
 
+    // Profile info shown in the greeting header
+    var username by remember { mutableStateOf("fashionista") }
+    var profilePictureBase64 by remember { mutableStateOf("") }
+
     LaunchedEffect(uid) {
         if (uid == null) {
             isLoading = false
@@ -67,7 +79,17 @@ fun HomeScreen(navController: NavController) {
         fetchOutfitLooks(db, uid) { fetchedLooks ->
             looks = fetchedLooks
         }
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { doc ->
+                val profile = doc.toObject(UserProfile::class.java)
+                if (profile != null) {
+                    username = profile.username
+                    profilePictureBase64 = profile.profilePictureBase64
+                }
+            }
     }
+
+    val profileBitmap = profilePictureBase64.takeIf { it.isNotBlank() }?.let { base64ToBitmap(it) }
 
     Scaffold(
         bottomBar = { BottomNavBar(navController = navController, current = "home") }
@@ -87,18 +109,34 @@ fun HomeScreen(navController: NavController) {
             ) {
                 Column {
                     Text("Hello,", fontSize = 22.sp, color = Color.Black)
-                    Text(
-                        "Rebeka",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = yellow
-                    )
+                    Row {
+                        Text(
+                            username,
+                            fontSize = 26.sp,
+                            color = purple
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(text = "⭐", fontSize = 24.sp)
+                    }
                 }
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(50.dp)
+                        .clip(CircleShape)
                         .background(Color.LightGray, RoundedCornerShape(50))
-                )
+                        .clickable { navController.navigate(Screen.Profile.route) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (profileBitmap != null) {
+                        Image(
+                            bitmap = profileBitmap.asImageBitmap(),
+                            contentDescription = "Profile picture",
+                            modifier = Modifier
+                                .size(50.dp)
+                                .background(Color.Transparent, RoundedCornerShape(50))
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -121,7 +159,7 @@ fun HomeScreen(navController: NavController) {
                         "Add new\nclothing",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = darkyellow
                     )
                 }
 
@@ -138,7 +176,7 @@ fun HomeScreen(navController: NavController) {
                         "Create a\nnew Look",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = darkpink
                     )
                 }
             }
@@ -178,7 +216,7 @@ fun HomeScreen(navController: NavController) {
                             OutfitLookThumbnail(
                                 look = look,
                                 itemsById = itemsById,
-                                modifier = Modifier.size(100.dp)
+                                modifier = Modifier.size(200.dp)
                             )
                         }
                     }
@@ -190,15 +228,15 @@ fun HomeScreen(navController: NavController) {
                     "By me",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = yellow
+                    color = purple
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(3) {
-                        Box(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .background(Color(0xFFFFF0B0), RoundedCornerShape(12.dp))
+                    items(1) {
+                        Text(
+                            "Coming soon!",
+                            fontSize = 12.sp,
+                            color = Color.Gray
                         )
                     }
                 }

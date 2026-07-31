@@ -3,6 +3,11 @@ package com.style_sphere.util
 import android.graphics.Bitmap
 import android.util.Base64
 import java.io.ByteArrayOutputStream
+import android.content.Context
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+
 
 fun bitmapToBase64(bitmap: Bitmap, maxDimension: Int = 600, quality: Int = 50): String {
     val ratio = minOf(
@@ -26,6 +31,20 @@ fun base64ToBitmap(base64: String): Bitmap? {
     return try {
         val bytes = Base64.decode(base64, Base64.DEFAULT)
         android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    } catch (e: Exception) {
+        null
+    }
+}
+
+fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
+    return try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val source = android.graphics.ImageDecoder.createSource(context.contentResolver, uri)
+            android.graphics.ImageDecoder.decodeBitmap(source)
+        } else {
+            @Suppress("DEPRECATION")
+            MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+        }
     } catch (e: Exception) {
         null
     }
