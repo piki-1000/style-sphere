@@ -2,6 +2,7 @@ package com.style_sphere.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,21 +24,18 @@ import com.style_sphere.data.ClothingItem
 import com.style_sphere.data.OutfitLook
 import com.style_sphere.util.base64ToBitmap
 
-/**
- * Shows one clothing item's photo (decoded from its stored base64 string).
- * If there's no item, or it has no photo yet, shows a soft colored
- * placeholder box instead - so the UI never just shows a blank gap.
- */
 @Composable
 fun ClothingItemImage(
     item: ClothingItem?,
     modifier: Modifier = Modifier,
     placeholderColor: Color = Color(0xFFEDEDED),
-    placeholderLabel: String = ""
+    placeholderLabel: String = "",
+    onClick: (() -> Unit)? = null
 ) {
     val bitmap = item?.imageBase64?.let { base64ToBitmap(it) }
+    val clickableModifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier
     Box(
-        modifier = modifier.background(placeholderColor, RoundedCornerShape(12.dp)),
+        modifier = clickableModifier.background(placeholderColor, RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center
     ) {
         if (bitmap != null) {
@@ -53,24 +51,17 @@ fun ClothingItemImage(
     }
 }
 
-/**
- * A compact vertical stack of an outfit look's item photos - a mini version
- * of the roulette screen's column layout, sized to fit inside a small grid
- * thumbnail (e.g. the 100dp boxes on Home/Closet).
- *
- * `itemsById` is a lookup (item ID -> ClothingItem) built once from the
- * user's full clothing collection, used to turn the look's stored item IDs
- * back into real items with real photos.
- */
 @Composable
 fun OutfitLookThumbnail(
     look: OutfitLook,
     itemsById: Map<String, ClothingItem>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     val items = look.itemIds.mapNotNull { itemsById[it] }
+    val clickableModifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier
     Column(
-        modifier = modifier
+        modifier = clickableModifier
             .background(Color(0xFFF3F3F3), RoundedCornerShape(12.dp))
             .padding(4.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp)
@@ -86,7 +77,6 @@ fun OutfitLookThumbnail(
     }
 }
 
-/** Fetches every clothing item the given user owns. */
 fun fetchClothingItems(
     db: FirebaseFirestore,
     uid: String,
@@ -104,7 +94,6 @@ fun fetchClothingItems(
         .addOnFailureListener { onResult(emptyList()) }
 }
 
-/** Fetches every outfit look the given user has saved. */
 fun fetchOutfitLooks(
     db: FirebaseFirestore,
     uid: String,

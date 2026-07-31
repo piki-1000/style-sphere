@@ -239,7 +239,7 @@ fun AddClothingDetailsScreen(navController: NavController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DropdownField(
+fun DropdownField(
     label: String,
     options: List<String>,
     selected: String,

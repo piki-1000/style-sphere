@@ -19,12 +19,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.style_sphere.data.ClothingItem
 import com.style_sphere.data.OutfitLook
+import com.style_sphere.navigation.Screen
 
 @Composable
 fun ClosetScreen(navController: NavController) {
     val purple = Color(0xFF7B5EA7)
 
-    // Read the tab index passed from HomeScreen (defaults to 0 = "My Clothes" if not set)
     val openTab = navController.currentBackStackEntry
         ?.savedStateHandle
         ?.get<Int>("openTab")
@@ -32,8 +32,6 @@ fun ClosetScreen(navController: NavController) {
     var selectedTab by remember { mutableStateOf(openTab ?: 0) }
     val tabs = listOf("My Clothes", "My Looks")
 
-    // Category display order + a pastel color used only as a placeholder
-    // background when a category has no items with photos yet.
     val categories = listOf(
         "T-shirts" to Color(0xFFD0C4E8),
         "Pants" to Color(0xFFC8D8C0),
@@ -48,11 +46,8 @@ fun ClosetScreen(navController: NavController) {
     val uid = auth.currentUser?.uid
 
     var isLoading by remember { mutableStateOf(true) }
-    // All the user's clothing items, grouped by category (for "My Clothes")
     var itemsByCategory by remember { mutableStateOf<Map<String, List<ClothingItem>>>(emptyMap()) }
-    // The same items, keyed by their own ID (used to resolve a look's itemIds into real items)
     var itemsById by remember { mutableStateOf<Map<String, ClothingItem>>(emptyMap()) }
-    // The user's saved outfit looks (for "My Looks")
     var looks by remember { mutableStateOf<List<OutfitLook>>(emptyList()) }
 
     LaunchedEffect(uid) {
@@ -140,7 +135,12 @@ fun ClosetScreen(navController: NavController) {
                                         ClothingItemImage(
                                             item = item,
                                             placeholderColor = color,
-                                            modifier = Modifier.size(72.dp)
+                                            modifier = Modifier.size(72.dp),
+                                            onClick = {
+                                                navController.navigate(
+                                                    Screen.EditClothingItem.createRoute(item.id)
+                                                )
+                                            }
                                         )
                                     }
                                 }
@@ -169,7 +169,12 @@ fun ClosetScreen(navController: NavController) {
                                     OutfitLookThumbnail(
                                         look = look,
                                         itemsById = itemsById,
-                                        modifier = Modifier.size(100.dp)
+                                        modifier = Modifier.size(100.dp),
+                                        onClick = {
+                                            navController.navigate(
+                                                Screen.LookDetail.createRoute(look.id)
+                                            )
+                                        }
                                     )
                                 }
                             }

@@ -2,8 +2,10 @@ package com.style_sphere.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.style_sphere.ui.screens.AddClothingDetailsScreen
 import com.style_sphere.ui.screens.AddClothingPhotoScreen
 import com.style_sphere.ui.screens.SplashScreen
@@ -14,6 +16,8 @@ import com.style_sphere.ui.screens.ClosetScreen
 import com.style_sphere.ui.screens.ForumScreen
 import com.style_sphere.ui.screens.SignUpScreen
 import com.style_sphere.ui.screens.OutfitRouletteScreen
+import com.style_sphere.ui.screens.LookDetailScreen
+import com.style_sphere.ui.screens.EditClothingItemScreen
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -26,6 +30,13 @@ sealed class Screen(val route: String) {
     object AddClothingPhoto : Screen("add_clothing_photo")
     object AddClothingDetails : Screen("add_clothing_details")
     object OutfitRoulette : Screen("outfit_roulette")
+
+    object LookDetail : Screen("look_detail/{lookId}") {
+        fun createRoute(lookId: String) = "look_detail/$lookId"
+    }
+    object EditClothingItem : Screen("edit_clothing_item/{itemId}") {
+        fun createRoute(itemId: String) = "edit_clothing_item/$itemId"
+    }
 }
 
 @Composable
@@ -63,6 +74,20 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Screen.OutfitRoulette.route) {
             OutfitRouletteScreen(navController = navController)
+        }
+        composable(
+            route = Screen.LookDetail.route,
+            arguments = listOf(navArgument("lookId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val lookId = backStackEntry.arguments?.getString("lookId") ?: return@composable
+            LookDetailScreen(navController = navController, lookId = lookId)
+        }
+        composable(
+            route = Screen.EditClothingItem.route,
+            arguments = listOf(navArgument("itemId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getString("itemId") ?: return@composable
+            EditClothingItemScreen(navController = navController, itemId = itemId)
         }
     }
 }
