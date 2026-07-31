@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.style_sphere.ui.screens.AddClothingDetailsScreen
+import com.style_sphere.ui.screens.AddClothingPhotoScreen
 import com.style_sphere.ui.screens.SplashScreen
 import com.style_sphere.ui.screens.SignInScreen
 import com.style_sphere.ui.screens.HomeScreen
@@ -11,6 +13,7 @@ import com.style_sphere.ui.screens.ProfileScreen
 import com.style_sphere.ui.screens.ClosetScreen
 import com.style_sphere.ui.screens.ForumScreen
 import com.style_sphere.ui.screens.SignUpScreen
+import com.style_sphere.ui.screens.OutfitRouletteScreen
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -20,6 +23,9 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object Closet : Screen("closet")
     object Forum : Screen("forum")
+    object AddClothingPhoto : Screen("add_clothing_photo")
+    object AddClothingDetails : Screen("add_clothing_details")
+    object OutfitRoulette : Screen("outfit_roulette")
 }
 
 @Composable
@@ -48,6 +54,15 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Screen.Forum.route) {
             ForumScreen(navController = navController)
+        }
+        composable(Screen.AddClothingPhoto.route) {
+            AddClothingPhotoScreen(navController = navController)
+        }
+        composable(Screen.AddClothingDetails.route) {
+            AddClothingDetailsScreen(navController = navController)
+        }
+        composable(Screen.OutfitRoulette.route) {
+            OutfitRouletteScreen(navController = navController)
         }
     }
 }

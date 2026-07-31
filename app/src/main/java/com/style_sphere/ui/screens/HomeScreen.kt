@@ -8,6 +8,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,6 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.style_sphere.data.ClothingItem
+import com.style_sphere.data.OutfitLook
 import com.style_sphere.navigation.Screen
 
 @Composable
@@ -23,6 +32,42 @@ fun HomeScreen(navController: NavController) {
     val yellow = Color(0xFFFFD600)
     val cream = Color(0xFFFFF8E1)
     val pink = Color(0xFFFFE4E9)
+
+    val categories = listOf(
+        "T-shirts" to Color(0xFFD0C4E8),
+        "Pants" to Color(0xFFC8D8C0),
+        "Skirts" to Color(0xFFFFF0B0),
+        "Dresses" to Color(0xFFB8D8E8),
+        "Shorts" to Color(0xFFE8C8C0),
+        "Shoes" to Color(0xFFF0D8E8)
+    )
+
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val uid = auth.currentUser?.uid
+
+    var isLoading by remember { mutableStateOf(true) }
+    // All the user's clothing items, grouped by category (for "My Clothes")
+    var itemsByCategory by remember { mutableStateOf<Map<String, List<ClothingItem>>>(emptyMap()) }
+    // The same items, keyed by their own ID (used to resolve a look's itemIds into real items)
+    var itemsById by remember { mutableStateOf<Map<String, ClothingItem>>(emptyMap()) }
+    // The user's saved outfit looks (for "My Looks")
+    var looks by remember { mutableStateOf<List<OutfitLook>>(emptyList()) }
+
+    LaunchedEffect(uid) {
+        if (uid == null) {
+            isLoading = false
+            return@LaunchedEffect
+        }
+        fetchClothingItems(db, uid) { items ->
+            itemsByCategory = items.groupBy { it.category }
+            itemsById = items.associateBy { it.id }
+            isLoading = false
+        }
+        fetchOutfitLooks(db, uid) { fetchedLooks ->
+            looks = fetchedLooks
+        }
+    }
 
     Scaffold(
         bottomBar = { BottomNavBar(navController = navController, current = "home") }
@@ -68,7 +113,7 @@ fun HomeScreen(navController: NavController) {
                         .weight(1f)
                         .height(110.dp)
                         .background(cream, RoundedCornerShape(20.dp))
-                        .clickable { navController.navigate(Screen.Closet.route) }
+                        .clickable { navController.navigate(Screen.AddClothingPhoto.route) }
                         .padding(16.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
@@ -85,7 +130,7 @@ fun HomeScreen(navController: NavController) {
                         .weight(1f)
                         .height(110.dp)
                         .background(pink, RoundedCornerShape(20.dp))
-                        .clickable { navController.navigate(Screen.Closet.route) }
+                        .clickable { navController.navigate(Screen.OutfitRoulette.route) }
                         .padding(16.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
@@ -122,14 +167,20 @@ fun HomeScreen(navController: NavController) {
                     fontWeight = FontWeight.Bold,
                     color = purple
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(3) {
-                        Box(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .background(Color(0xFFD0C4E8), RoundedCornerShape(12.dp))
-                        )
+
+                if (looks.isEmpty()) {
+                    Text("No looks generated yet", color = Color.Gray, fontSize = 13.sp)
+                } else {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(looks) { look ->
+                            OutfitLookThumbnail(
+                                look = look,
+                                itemsById = itemsById,
+                                modifier = Modifier.size(100.dp)
+                            )
+                        }
                     }
                 }
 

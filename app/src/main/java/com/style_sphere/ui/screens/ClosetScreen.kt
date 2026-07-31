@@ -1,11 +1,9 @@
 package com.style_sphere.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
@@ -17,6 +15,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.style_sphere.data.ClothingItem
+import com.style_sphere.data.OutfitLook
 
 @Composable
 fun ClosetScreen(navController: NavController) {
@@ -30,13 +32,43 @@ fun ClosetScreen(navController: NavController) {
     var selectedTab by remember { mutableStateOf(openTab ?: 0) }
     val tabs = listOf("My Clothes", "My Looks")
 
+    // Category display order + a pastel color used only as a placeholder
+    // background when a category has no items with photos yet.
     val categories = listOf(
         "T-shirts" to Color(0xFFD0C4E8),
         "Pants" to Color(0xFFC8D8C0),
         "Skirts" to Color(0xFFFFF0B0),
         "Dresses" to Color(0xFFB8D8E8),
-        "Coats" to Color(0xFFE8C8C0)
+        "Shorts" to Color(0xFFE8C8C0),
+        "Shoes" to Color(0xFFF0D8E8)
     )
+
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val uid = auth.currentUser?.uid
+
+    var isLoading by remember { mutableStateOf(true) }
+    // All the user's clothing items, grouped by category (for "My Clothes")
+    var itemsByCategory by remember { mutableStateOf<Map<String, List<ClothingItem>>>(emptyMap()) }
+    // The same items, keyed by their own ID (used to resolve a look's itemIds into real items)
+    var itemsById by remember { mutableStateOf<Map<String, ClothingItem>>(emptyMap()) }
+    // The user's saved outfit looks (for "My Looks")
+    var looks by remember { mutableStateOf<List<OutfitLook>>(emptyList()) }
+
+    LaunchedEffect(uid) {
+        if (uid == null) {
+            isLoading = false
+            return@LaunchedEffect
+        }
+        fetchClothingItems(db, uid) { items ->
+            itemsByCategory = items.groupBy { it.category }
+            itemsById = items.associateBy { it.id }
+            isLoading = false
+        }
+        fetchOutfitLooks(db, uid) { fetchedLooks ->
+            looks = fetchedLooks
+        }
+    }
 
     Scaffold(
         bottomBar = { BottomNavBar(navController = navController, current = "closet") }
@@ -61,6 +93,13 @@ fun ClosetScreen(navController: NavController) {
                 }
             }
 
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = purple)
+                }
+                return@Column
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -68,6 +107,7 @@ fun ClosetScreen(navController: NavController) {
             ) {
                 if (selectedTab == 0) {
                     items(categories) { (name, color) ->
+                        val categoryItems = itemsByCategory[name].orEmpty()
                         Column(modifier = Modifier.padding(bottom = 16.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -87,17 +127,28 @@ fun ClosetScreen(navController: NavController) {
                                 )
                             }
                             Spacer(modifier = Modifier.height(8.dp))
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                items(4) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(72.dp)
-                                            .background(color, RoundedCornerShape(12.dp))
-                                    )
+                            if (categoryItems.isEmpty()) {
+                                ClothingItemImage(
+                                    item = null,
+                                    placeholderColor = color,
+                                    placeholderLabel = "No $name yet",
+                                    modifier = Modifier.size(72.dp)
+                                )
+                            } else {
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    items(categoryItems.take(4)) { item ->
+                                        ClothingItemImage(
+                                            item = item,
+                                            placeholderColor = color,
+                                            modifier = Modifier.size(72.dp)
+                                        )
+                                    }
                                 }
                             }
-                            TextButton(onClick = {}) {
-                                Text("See more", color = Color.Gray, fontSize = 12.sp)
+                            if (categoryItems.size > 4) {
+                                TextButton(onClick = {}) {
+                                    Text("See more", color = Color.Gray, fontSize = 12.sp)
+                                }
                             }
                         }
                     }
@@ -110,13 +161,17 @@ fun ClosetScreen(navController: NavController) {
                             color = purple
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(3) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(100.dp)
-                                        .background(Color(0xFFD0C4E8), RoundedCornerShape(12.dp))
-                                )
+                        if (looks.isEmpty()) {
+                            Text("No looks generated yet", color = Color.Gray, fontSize = 13.sp)
+                        } else {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(looks) { look ->
+                                    OutfitLookThumbnail(
+                                        look = look,
+                                        itemsById = itemsById,
+                                        modifier = Modifier.size(100.dp)
+                                    )
+                                }
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
@@ -127,15 +182,10 @@ fun ClosetScreen(navController: NavController) {
                             color = Color(0xFFFFD600)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(3) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(100.dp)
-                                        .background(Color(0xFFFFF0B0), RoundedCornerShape(12.dp))
-                                )
-                            }
-                        }
+                        // "Make My Own" isn't built yet, so there's nothing real
+                        // to show here yet - once that screen saves its own
+                        // OutfitLooks, this section can filter/fetch those too.
+                        Text("Coming soon", color = Color.Gray, fontSize = 13.sp)
                     }
                 }
             }
